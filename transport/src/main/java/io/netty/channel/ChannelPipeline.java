@@ -48,6 +48,13 @@ import java.util.NoSuchElementException;
  * {@link ChannelHandlerContext}, such as {@link ChannelHandlerContext#fireChannelRead(Object)} and
  * {@link ChannelHandlerContext#write(Object)}.
  *
+ * ChannelHandler分为 ChannelInBoundHandler 和 ChannelOutboundHandler 两种，如果一个入站 IO 事件被触发，
+ * 这个事件会从第一个开始依次通过 ChannelPipeline中的 ChannelInBoundHandler，先添加的先执行。
+ *
+ * 若是一个出站 I/O 事件，则会从最后一个开始依次通过 ChannelPipeline 中的 ChannelOutboundHandler，
+ * 后添加的先执行，然后通过调用在 ChannelHandlerContext 中定义的事件传播方法传递给最近的 ChannelHandler。
+ *
+ * ！谁读就以谁为视角。
  * <pre>
  *                                                 I/O Request
  *                                            via {@link Channel} or

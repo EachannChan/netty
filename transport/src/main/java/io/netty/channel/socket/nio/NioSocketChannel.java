@@ -57,6 +57,12 @@ import static io.netty.channel.internal.ChannelUtils.MAX_BYTES_PER_GATHERING_WRI
  * {@link io.netty.channel.socket.SocketChannel} which uses NIO selector based implementation.
  */
 public class NioSocketChannel extends AbstractNioByteChannel implements io.netty.channel.socket.SocketChannel {
+    /**
+     * DEFAULT_SELECTOR_PROVIDER 静态属性，默认的 SelectorProvider 实现类。
+     *
+     * config 属性，Channel 对应的配置对象。每种 Channel 实现类，也会对应一个 ChannelConfig 实现类。
+     * 例如，NioSocketChannel 类，对应 SocketChannelConfig 配置类。
+     */
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioSocketChannel.class);
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
 
@@ -318,6 +324,12 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
         boolean success = false;
         try {
+            /*
+              若连接未完成( connected == false )时，我们可以看到，
+              调用 SelectionKey#interestOps(ops) 方法，
+              添加连接事件( SelectionKey.OP_CONNECT )为感兴趣的事件。
+              也就是说，当连接远程地址成功时，Channel 对应的 Selector 将会轮询到该事件，可以进一步处理。
+             */
             boolean connected = SocketUtils.connect(javaChannel(), remoteAddress);
             if (!connected) {
                 selectionKey().interestOps(SelectionKey.OP_CONNECT);
@@ -333,6 +345,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     protected void doFinishConnect() throws Exception {
+        //！ 调用 SocketChannel#finishConnect() 方法，完成连接。
         if (!javaChannel().finishConnect()) {
             throw new Error();
         }

@@ -49,10 +49,25 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     // The order in which child ChannelOptions are applied is important they may depend on each other for validation
     // purposes.
-    private final Map<ChannelOption<?>, Object> childOptions = new LinkedHashMap<ChannelOption<?>, Object>();
-    private final Map<AttributeKey<?>, Object> childAttrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
+    /**
+     * 启动类配置对象
+     */
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
+    /**
+     * 子 Channel 的可选项集合
+     */
+    private final Map<ChannelOption<?>, Object> childOptions = new LinkedHashMap<ChannelOption<?>, Object>();
+    /**
+     * 子 Channel 的属性集合
+     */
+    private final Map<AttributeKey<?>, Object> childAttrs = new LinkedHashMap<AttributeKey<?>, Object>();
+    /**
+     * 子 Channel 的 EventLoopGroup 对象
+     */
     private volatile EventLoopGroup childGroup;
+    /**
+     * 子 Channel 的处理器
+     */
     private volatile ChannelHandler childHandler;
 
     public ServerBootstrap() { }
@@ -130,26 +145,32 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     @Override
     void init(Channel channel) {
+        // 初始化 Channel 的可选项集合
         setChannelOptions(channel, newOptionsArray(), logger);
         setAttributes(channel, newAttributesArray());
 
         ChannelPipeline p = channel.pipeline();
 
+        // 记录当前的属性
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions);
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs);
         final Collection<ChannelInitializerExtension> extensions = getInitializerExtensions();
 
+        // 添加 ChannelInitializer 对象到 pipeline 中，用于后续初始化 ChannelHandler 到 pipeline 中。
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
+                // 添加配置的 ChannelHandler 到 pipeline 中。
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
 
+                // 添加 ServerBootstrapAcceptor 到 pipeline 中。
+                // 使用 EventLoop 执行的原因，参见 https://github.com/lightningMan/netty/commit/4638df20628a8987c8709f0f8e5f3679a914ce1a
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

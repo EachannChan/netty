@@ -34,6 +34,12 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultithreadEventLoopGroup.class);
 
+    /**
+     * DEFAULT_EVENT_LOOP_THREADS 属性，EventLoopGroup 默认拥有的 EventLoop 数量。
+     * 因为一个 EventLoop 对应一个线程，所以为 CPU 数量 * 2 。
+     * 为什么会 * 2 呢？因为目前 CPU 基本都是超线程，一个 CPU 可对应 2 个线程。
+     * 在构造方法未传入 nThreads 方法参数时，使用 DEFAULT_EVENT_LOOP_THREADS
+     */
     private static final int DEFAULT_EVENT_LOOP_THREADS;
 
     static {
